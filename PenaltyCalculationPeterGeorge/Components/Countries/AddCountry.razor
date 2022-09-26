@@ -1,0 +1,67 @@
+﻿@inject ICountry CountryService
+@inject ICountryWeekEnds CountryWeekEndsService
+
+<div style="border: 2px dashed blue " class="p-3">
+
+    <h3 class="text-center">Add new country</h3>
+    <EditForm Model="countryDTO" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator/>
+
+    <div class="mb-3">
+        <label for="cname" class="form-label">Country name</label>
+        <InputText @bind-Value="countryDTO.CountryName" class="form-control" id="cname" />
+    </div>
+
+    <div class="mb-3">
+        <label for="clcode" class="form-label">Country language code</label>
+        <InputText @bind-Value="countryDTO.CountryLanguageCode" class="form-control" id="clcode" />
+    </div>
+
+    <div class="mb-3">
+        <label for="weekends" class="form-label">Please select country weekends</label>
+        <InputSelect class="form-select" @bind-Value="countryDTO.Weekends">
+        @foreach (var day in Enum.GetValues(typeof(DayOfWeek)))
+        {
+            <option value="@day">@day</option>
+        }
+    </InputSelect>
+
+    </div>
+    <button type="submit" class="btn btn-primary mb-3">Add Country</button>
+
+    <ValidationSummary/>
+</EditForm>
+</div>
+
+
+
+
+
+@code {
+    CountryDTO countryDTO = new ();
+
+    async Task OnValidSubmit ()
+    {
+        Country country = new Country 
+        { 
+            Name = countryDTO.CountryName ,
+            Curreny = countryDTO.CountryLanguageCode            
+        };
+
+        await  CountryService.ADD(country); 
+
+        foreach (var item in countryDTO.Weekends)
+        {
+            await CountryWeekEndsService.ADD(new CountryWeekEnds
+            {
+                    CountryID = country.ID ,
+                    DayOf = item 
+                    
+            });
+        }
+
+        MessagingCenter.Send(this , "CountryAdded" , country) ; 
+
+        countryDTO = new (); 
+    }
+}

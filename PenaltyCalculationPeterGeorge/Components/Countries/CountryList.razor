@@ -1,0 +1,38 @@
+﻿@inject ICountry CountryService
+
+<div class="text-center mt-5 alert alert-primary">All countries</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Country Name</th>
+            <th scope="col">language Code</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var country in countries)
+        {
+            
+            <tr>
+                <td>@country.Name</td>
+                <td>@country.Curreny</td>
+            </tr>
+        }
+       
+    </tbody>
+</table>
+
+@code {
+    List<Country> countries = new ();
+
+    protected override async Task OnInitializedAsync()
+    {
+        countries = await CountryService.GetAll();
+
+        MessagingCenter.Subscribe<AddCountry, Country>(this, "CountryAdded", async (sender, country) =>
+        {
+            countries.Add(country) ; 
+            await InvokeAsync(()=> StateHasChanged()) ; 
+        });
+
+    }
+}

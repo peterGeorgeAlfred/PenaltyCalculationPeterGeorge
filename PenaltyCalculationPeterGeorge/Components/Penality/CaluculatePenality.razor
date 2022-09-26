@@ -1,0 +1,164 @@
+﻿
+@using System.Globalization
+@inject ICountry CountryService
+@inject IPenaletyService PenaletyService
+@inject ICountryWeekEnds CountryWeekendService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Index</PageTitle>
+
+<EditForm Model="@penaletyModel" OnValidSubmit="OnValidSubmit">
+
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label for="startdate" class="form-label">Start Date</label>
+        <InputDate @bind-Value="penaletyModel.StartDate" id="startdate" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label for="enddate" class="form-label">End Date</label>
+        <InputDate @bind-Value="penaletyModel.EndDate" id="enddate" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        @*<label for="enddate" class="form-label">Please select country</label>*@
+
+        <InputSelect @oninput="onSelectChange" TValue="int" class="form-select" @bind-Value="@penaletyModel.CountryID">
+            <option selected>Please select country</option>
+
+            <option>
+            <button @onclick="OnAddCountry">Add new country</button>
+            </option>
+
+            @foreach (var country in countries)
+            {
+                <option value="@country.ID">@country.Name</option>
+            }
+
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-primary mb-3">Calculate Penalety</button>
+    <ValidationSummary />
+
+    @if (!isStartDateValid)
+    {
+        <p class="text-danger" style="font-weight: bold;">. @startDateMSG</p>
+    }
+
+    @if (!isEndDateValid)
+    {
+        <p class="text-danger" style="font-weight: bold;">. @endDateMSG</p>
+    }
+
+    @if (!isCountrySelect)
+    {
+        <p class="text-danger" style="font-weight: bold;">. @countrySelectedMSG</p>
+    }
+</EditForm>
+
+@{
+    string symbol = countries.FirstOrDefault(i => i.ID == penaletyModel.CountryID)?.Curreny ?? string.Empty;
+    if (symbol != string.Empty && penalety != 0)
+    {
+        <div class="alert alert-danger mt-5 text-center" role="alert">
+
+            <h3>Penality: @string.Format(CultureInfo.CreateSpecificCulture(symbol),"{0:C}" , penalety)</h3>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-primary mt-5 text-center" role="alert">
+            <h3>No Penality</h3>
+        </div>
+    }
+
+}
+
+@code
+{
+    int penalety;
+    bool isStartDateValid = true;
+    string startDateMSG = string.Empty;
+    bool isEndDateValid = true;
+    string endDateMSG = string.Empty;
+    bool isCountrySelect = true;
+    string countrySelectedMSG = string.Empty;
+
+    PenaletyDTO penaletyModel = new();
+    List<Country> countries = new List<Country>();
+    List<CountryWeekEnds> countryWeekEnds = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        countries = await CountryService.GetAll();
+    }
+
+    async Task OnValidSubmit()
+    {
+        resetValidation();
+
+        if (penaletyModel.CountryID == 0)
+        {
+            isCountrySelect = false;
+            countrySelectedMSG = "Plesae choose country";
+            return;
+        }
+
+
+        if (penaletyModel.EndDate.Date < penaletyModel.StartDate.Date)
+        {
+            isEndDateValid = false;
+            endDateMSG = "End date should be greater than start date";
+            return;
+        }
+
+        countryWeekEnds = await CountryWeekendService.GetByCountryId(penaletyModel.CountryID);
+        foreach (var item in countryWeekEnds)
+        {
+            if (item.DayOf == penaletyModel.StartDate.DayOfWeek)
+            {
+                isStartDateValid = false;
+                startDateMSG = "Cannot choose start date at weekend days";
+                return;
+            }
+
+            if (item.DayOf == penaletyModel.EndDate.DayOfWeek)
+            {
+                isEndDateValid = false;
+                endDateMSG = "Cannot choose end date at weekend days";
+                return;
+            }
+
+        }
+
+
+
+        penalety = await PenaletyService.GetPenality(5, penaletyModel.StartDate, penaletyModel.EndDate, penaletyModel.CountryID);
+    }
+
+    void onSelectChange(ChangeEventArgs e)
+    {
+        penalety = 0;
+    }
+
+    void resetValidation()
+    {
+        penalety = 0;
+        isStartDateValid = true;
+        isEndDateValid = true;
+        isCountrySelect = true;
+        endDateMSG = string.Empty;
+        startDateMSG = string.Empty;
+        countrySelectedMSG = string.Empty;
+
+    }
+
+    void OnAddCountry()
+    {
+        NavigationManager.NavigateTo("/Countries");
+    }
+}
+
+
