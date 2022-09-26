@@ -26,9 +26,7 @@
         <InputSelect @oninput="onSelectChange" TValue="int" class="form-select" @bind-Value="@penaletyModel.CountryID">
             <option selected>Please select country</option>
 
-            <option>
-            <button @onclick="OnAddCountry">Add new country</button>
-            </option>
+            
 
             @foreach (var country in countries)
             {
