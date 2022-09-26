@@ -7,7 +7,7 @@ using PenaltyCalculationPeterGeorge.Repositry.Manger;
 using PenaltyCalculationPeterGeorge.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnectionOnline");
 builder.Services.AddDbContext<DBContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
