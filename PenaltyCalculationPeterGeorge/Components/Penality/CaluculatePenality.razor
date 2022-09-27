@@ -95,45 +95,52 @@
 
     async Task OnValidSubmit()
     {
-        resetValidation();
-
-        if (penaletyModel.CountryID == 0)
+        try
         {
-            isCountrySelect = false;
-            countrySelectedMSG = "Plesae choose country";
-            return;
-        }
 
+      
+            resetValidation();
 
-        if (penaletyModel.EndDate.Date < penaletyModel.StartDate.Date)
-        {
-            isEndDateValid = false;
-            endDateMSG = "End date should be greater than start date";
-            return;
-        }
-
-        countryWeekEnds = await CountryWeekendService.GetByCountryId(penaletyModel.CountryID);
-        foreach (var item in countryWeekEnds)
-        {
-            if (item.DayOf == penaletyModel.StartDate.DayOfWeek)
+            if (penaletyModel.CountryID == 0)
             {
-                isStartDateValid = false;
-                startDateMSG = "Cannot choose start date at weekend days";
+                isCountrySelect = false;
+                countrySelectedMSG = "Plesae choose country";
                 return;
             }
 
-            if (item.DayOf == penaletyModel.EndDate.DayOfWeek)
+
+            if (penaletyModel.EndDate.Date < penaletyModel.StartDate.Date)
             {
                 isEndDateValid = false;
-                endDateMSG = "Cannot choose end date at weekend days";
+                endDateMSG = "End date should be greater than start date";
                 return;
             }
 
+            countryWeekEnds = await CountryWeekendService.GetByCountryId(penaletyModel.CountryID);
+            foreach (var item in countryWeekEnds)
+            {
+                if (item.DayOf == penaletyModel.StartDate.DayOfWeek)
+                {
+                    isStartDateValid = false;
+                    startDateMSG = "Cannot choose start date at weekend days";
+                    return;
+                }
+
+                if (item.DayOf == penaletyModel.EndDate.DayOfWeek)
+                {
+                    isEndDateValid = false;
+                    endDateMSG = "Cannot choose end date at weekend days";
+                    return;
+                }
+
+            }
+
+
+            int PenaltyValue = countries.FirstOrDefault(i=>i.ID == penaletyModel.CountryID)?.penaletyValue ?? 0 ; 
+            penalety = await PenaletyService.GetPenality(PenaltyValue, penaletyModel.StartDate, penaletyModel.EndDate, penaletyModel.CountryID);
+
         }
-
-
-
-        penalety = await PenaletyService.GetPenality(5, penaletyModel.StartDate, penaletyModel.EndDate, penaletyModel.CountryID);
+        catch { }
     }
 
     void onSelectChange(ChangeEventArgs e)

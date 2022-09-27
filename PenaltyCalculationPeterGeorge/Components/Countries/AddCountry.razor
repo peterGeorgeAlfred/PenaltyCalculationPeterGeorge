@@ -17,6 +17,11 @@
         <InputText @bind-Value="countryDTO.CountryLanguageCode" class="form-control" id="clcode" />
     </div>
 
+        <div class="mb-3">
+            <label for="penvalue" class="form-label">Country Penalety Value </label>
+            <InputNumber  @bind-Value="countryDTO.PenaletyValue" class="form-control" id="penvalue" />
+        </div>
+
     <div class="mb-3">
         <label for="weekends" class="form-label">Please select country weekends</label>
         <InputSelect class="form-select" @bind-Value="countryDTO.Weekends">
@@ -42,26 +47,32 @@
 
     async Task OnValidSubmit ()
     {
-        Country country = new Country 
-        { 
-            Name = countryDTO.CountryName ,
-            Curreny = countryDTO.CountryLanguageCode            
-        };
-
-        await  CountryService.ADD(country); 
-
-        foreach (var item in countryDTO.Weekends)
+        try
         {
-            await CountryWeekEndsService.ADD(new CountryWeekEnds
+
+            Country country = new Country 
+            { 
+                Name = countryDTO.CountryName ,
+                Curreny = countryDTO.CountryLanguageCode  ,
+                penaletyValue = countryDTO.PenaletyValue
+            };
+
+            await  CountryService.ADD(country); 
+
+            foreach (var item in countryDTO.Weekends)
             {
-                    CountryID = country.ID ,
-                    DayOf = item 
+                await CountryWeekEndsService.ADD(new CountryWeekEnds
+                {
+                        CountryID = country.ID ,
+                        DayOf = item 
                     
-            });
+                });
+            }
+
+            MessagingCenter.Send(this , "CountryAdded" , country) ; 
+
+            countryDTO = new (); 
         }
-
-        MessagingCenter.Send(this , "CountryAdded" , country) ; 
-
-        countryDTO = new (); 
+        catch{}
     }
 }

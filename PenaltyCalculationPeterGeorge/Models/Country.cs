@@ -11,5 +11,7 @@ namespace PenaltyCalculationPeterGeorge.Models
 
         [Required]
         public string Curreny { get; set; } = string.Empty; 
+
+        public int   penaletyValue { get; set;  }
     }
 }
